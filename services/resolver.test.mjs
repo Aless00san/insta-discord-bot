@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import fs from 'fs';
 import { resolveReel, downloadAsBuffer, _dep } from './resolver';
 
 beforeEach(() => {
@@ -48,26 +47,56 @@ describe('resolveReel', () => {
 });
 
 describe('downloadAsBuffer', () => {
-  it('reads file written by yt-dlp and returns buffer', async () => {
-    const testData = Buffer.from('fake mp4 data');
-    _dep.execFile = vi.fn((_bin, args, _opts, cb) => {
-      const oIdx = args.indexOf('-o');
-      const outPath = args[oIdx + 1];
-      fs.writeFileSync(outPath, testData);
-      cb(null, '', '');
-    });
+  function makeMockProc() {
+    const stdoutHandlers = {};
+    const stderrHandlers = {};
+    const procHandlers = {};
+    return {
+      stdout: { on: vi.fn((evt, fn) => { stdoutHandlers[evt] = fn; }) },
+      stderr: { on: vi.fn((evt, fn) => { stderrHandlers[evt] = fn; }) },
+      on: vi.fn((evt, fn) => { procHandlers[evt] = fn; }),
+      _stdout: stdoutHandlers,
+      _stderr: stderrHandlers,
+      _proc: procHandlers,
+    };
+  }
 
-    const result = await downloadAsBuffer('abc123');
+  it('buffers stdout and resolves', async () => {
+    const proc = makeMockProc();
+    _dep.spawn = vi.fn(() => proc);
 
-    expect(result).toEqual(testData);
+    const promise = downloadAsBuffer('abc123');
+    const chunks = [Buffer.from('chunk1'), Buffer.from('chunk2')];
+
+    proc._stdout.data(chunks[0]);
+    proc._stdout.data(chunks[1]);
+    proc._proc.close(0);
+
+    const result = await promise;
+    expect(result).toEqual(Buffer.concat(chunks));
   });
 
-  it('rejects on yt-dlp error', async () => {
-    _dep.execFile = vi.fn((_bin, _args, _opts, cb) => {
-      cb(new Error('download failed'), '', 'stderr');
-    });
+  it('rejects on non-zero exit code', async () => {
+    const proc = makeMockProc();
+    _dep.spawn = vi.fn(() => proc);
 
-    await expect(downloadAsBuffer('abc123')).rejects.toThrow('yt-dlp download failed');
+    const promise = downloadAsBuffer('abc123');
+
+    proc._stderr.data('error message');
+    proc._proc.close(1);
+
+    await expect(promise).rejects.toThrow('yt-dlp download failed');
+  });
+
+  it('rejects on spawn error', async () => {
+    const proc = makeMockProc();
+    _dep.spawn = vi.fn(() => proc);
+
+    const promise = downloadAsBuffer('abc123');
+
+    proc._proc.error(new Error('spawn failed'));
+
+    await expect(promise).rejects.toThrow('spawn failed');
   });
 });
 
