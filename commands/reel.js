@@ -20,7 +20,11 @@ module.exports = {
       option
         .setName('url')
         .setDescription('Instagram reel URL')
-        .setRequired(true)),
+        .setRequired(true))
+    .addBooleanOption((option) =>
+      option
+        .setName('anon')
+        .setDescription('Skip cookies (for public reels only)')),
 
   async execute(interaction) {
     const url = interaction.options.getString('url');
@@ -36,12 +40,13 @@ module.exports = {
     }
 
     const reelId = match[1];
+    const cookieArgs = interaction.options.getBoolean('anon') ? [] : undefined;
     await interaction.deferReply();
 
     try {
       const [meta, buffer] = await Promise.all([
-        _dep.resolver.resolveReel(reelId),
-        _dep.resolver.downloadAsBuffer(reelId),
+        _dep.resolver.resolveReel(reelId, cookieArgs),
+        _dep.resolver.downloadAsBuffer(reelId, cookieArgs),
       ]);
 
       const maxBytes = MAX_BYTES[interaction.guild?.premiumTier] ?? DEFAULT_MAX;

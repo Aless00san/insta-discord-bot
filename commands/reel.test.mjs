@@ -5,6 +5,7 @@ vi.mock('discord.js', () => ({
     setName: vi.fn().mockReturnThis(),
     setDescription: vi.fn().mockReturnThis(),
     addStringOption: vi.fn().mockReturnThis(),
+    addBooleanOption: vi.fn().mockReturnThis(),
   })),
   GuildPremiumTier: { None: 0, Tier1: 1, Tier2: 2, Tier3: 3 },
 }));
@@ -14,9 +15,12 @@ import { execute, _dep } from './reel';
 const mockResolveReel = vi.fn();
 const mockDownloadAsBuffer = vi.fn();
 
-function makeInteraction({ url, premiumTier } = {}) {
+function makeInteraction({ url, premiumTier, anon } = {}) {
   return {
-    options: { getString: vi.fn(() => url || 'https://www.instagram.com/reel/abc123/') },
+    options: {
+      getString: vi.fn(() => url || 'https://www.instagram.com/reel/abc123/'),
+      getBoolean: vi.fn(() => anon ?? false),
+    },
     guild: premiumTier !== undefined ? { premiumTier } : null,
     reply: vi.fn(),
     deferReply: vi.fn(),
@@ -74,6 +78,31 @@ describe('successful download', () => {
       content: '📥 My Cool Reel',
       files: [{ attachment: buffer, name: 'abc123.mp4' }],
     });
+  });
+
+  it('passes undefined cookieArgs by default', async () => {
+    const interaction = makeInteraction({ url: 'https://www.instagram.com/reel/abc123/' });
+    mockResolveReel.mockResolvedValue({ title: 'Test' });
+    mockDownloadAsBuffer.mockResolvedValue(Buffer.alloc(1));
+
+    await execute(interaction);
+
+    expect(mockResolveReel).toHaveBeenCalledWith('abc123', undefined);
+    expect(mockDownloadAsBuffer).toHaveBeenCalledWith('abc123', undefined);
+  });
+
+  it('passes empty cookieArgs when anon is true', async () => {
+    const interaction = makeInteraction({
+      url: 'https://www.instagram.com/reel/abc123/',
+      anon: true,
+    });
+    mockResolveReel.mockResolvedValue({ title: 'Test' });
+    mockDownloadAsBuffer.mockResolvedValue(Buffer.alloc(1));
+
+    await execute(interaction);
+
+    expect(mockResolveReel).toHaveBeenCalledWith('abc123', []);
+    expect(mockDownloadAsBuffer).toHaveBeenCalledWith('abc123', []);
   });
 });
 
