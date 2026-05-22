@@ -5,10 +5,18 @@
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "dev": "node --watch bot.js"
+    "dev": "node --watch bot.js",
+    "lint": "eslint .",
+    "test": "vitest run"
   },
   "dependencies": {
     "discord.js": "^14.26.4",
     "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0",
+    "vitest": "^4.1.7"
   }
 }

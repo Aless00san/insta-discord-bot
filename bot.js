@@ -53,3 +53,12 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+
+async function shutdown() {
+  console.log('Shutting down...');
+  await client.destroy();
+  process.exit(0);
+}

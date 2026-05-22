@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, GuildPremiumTier } = require('discord.js');
 const resolver = require('../services/resolver');
 
+const _dep = { resolver };
+
 const MAX_BYTES = {
   [GuildPremiumTier.None]: 25 * 1024 * 1024,
   [GuildPremiumTier.Tier1]: 25 * 1024 * 1024,
@@ -10,6 +12,7 @@ const MAX_BYTES = {
 const DEFAULT_MAX = 25 * 1024 * 1024;
 
 module.exports = {
+  _dep,
   data: new SlashCommandBuilder()
     .setName('reel')
     .setDescription('Fetch an Instagram reel video')
@@ -37,8 +40,8 @@ module.exports = {
 
     try {
       const [meta, buffer] = await Promise.all([
-        resolver.resolveReel(reelId),
-        resolver.downloadAsBuffer(reelId),
+        _dep.resolver.resolveReel(reelId),
+        _dep.resolver.downloadAsBuffer(reelId),
       ]);
 
       const maxBytes = MAX_BYTES[interaction.guild?.premiumTier] ?? DEFAULT_MAX;
