@@ -11,12 +11,11 @@ function getCookieArgs() {
       : ['--cookies-from-browser', 'firefox'];
 }
 
-function resolveReel(reelId, cookieArgs) {
-  if (!cookieArgs) cookieArgs = getCookieArgs();
+function resolveReel(reelId) {
   return new Promise((resolve, reject) => {
     const url = `https://www.instagram.com/reel/${reelId}/`;
 
-    _dep.execFile(YT_DLP, [...cookieArgs, '--dump-json', url], { timeout: 30000 }, (err, stdout, stderr) => {
+    _dep.execFile(YT_DLP, [...getCookieArgs(), '--dump-json', url], { timeout: 30000 }, (err, stdout, stderr) => {
       if (err) {
         return reject(new Error(`yt-dlp metadata failed: ${stderr || err.message}`));
       }
@@ -37,12 +36,11 @@ function resolveReel(reelId, cookieArgs) {
   });
 }
 
-function downloadAsBuffer(reelId, cookieArgs) {
-  if (!cookieArgs) cookieArgs = getCookieArgs();
+function downloadAsBuffer(reelId) {
   return new Promise((resolve, reject) => {
     const url = `https://www.instagram.com/reel/${reelId}/`;
     const args = [
-      ...cookieArgs,
+      ...getCookieArgs(),
       '-S', 'codec:h264',
       '-f', 'best',
       '-o', '-',
