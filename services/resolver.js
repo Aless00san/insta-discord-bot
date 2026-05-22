@@ -1,4 +1,7 @@
 const cp = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 
 const YT_DLP = process.env.YT_DLP_PATH || 'yt-dlp';
 const _dep = { execFile: cp.execFile, spawn: cp.spawn };
@@ -39,29 +42,33 @@ function resolveReel(reelId) {
 function downloadAsBuffer(reelId) {
   return new Promise((resolve, reject) => {
     const url = `https://www.instagram.com/reel/${reelId}/`;
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reel-'));
+    const tmpFile = path.join(tmpDir, `${reelId}.mp4`);
     const args = [
       ...getCookieArgs(),
       '-f', 'bestvideo+bestaudio/best',
       '--merge-output-format', 'mp4',
-      '-o', '-',
+      '-o', tmpFile,
       url,
     ];
 
-    const proc = _dep.spawn(YT_DLP, args, { timeout: 120000 });
-    const chunks = [];
-    let stderr = '';
-
-    proc.stdout.on('data', (chunk) => chunks.push(chunk));
-    proc.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
-
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(`yt-dlp download failed: ${stderr || `exit code ${code}`}`));
+    _dep.execFile(YT_DLP, args, { timeout: 120000 }, (err, _stdout, stderr) => {
+      if (err) {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+        return reject(new Error(`yt-dlp download failed: ${stderr || err.message}`));
       }
-      resolve(Buffer.concat(chunks));
-    });
 
-    proc.on('error', reject);
+      let buffer;
+      try {
+        buffer = fs.readFileSync(tmpFile);
+      } catch {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+        return reject(new Error('Failed to read downloaded video'));
+      }
+
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      resolve(buffer);
+    });
   });
 }
 
