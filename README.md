@@ -45,6 +45,16 @@ For containerized environments (Railway, Docker), export cookies to a file and u
 # YT_DLP_COOKIES=/path/to/cookies.txt
 ```
 
+## Testing
+
+Run tests with:
+
+```sh
+pnpm test
+```
+
+Tests use [Vitest](https://vitest.dev) and cover the resolver (yt-dlp wrapper) and the `/reel` command handler. Dependencies are injected for testing — no external services required.
+
 ## How it works
 
 1. Bot receives `/reel` with an Instagram reel URL
