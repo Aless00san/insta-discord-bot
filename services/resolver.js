@@ -41,9 +41,8 @@ function downloadAsBuffer(reelId) {
     const url = `https://www.instagram.com/reel/${reelId}/`;
     const args = [
       ...getCookieArgs(),
-      '-f', 'bestvideo+bestaudio/best',
-      '--merge-output-format', 'mp4',
-      '--postprocessor-args', 'ffmpeg:-movflags frag_keyframe+empty_moov',
+      '-S', 'codec:h264',
+      '-f', 'best',
       '-o', '-',
       url,
     ];

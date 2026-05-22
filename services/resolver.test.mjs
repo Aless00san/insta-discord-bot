@@ -61,6 +61,19 @@ describe('downloadAsBuffer', () => {
     };
   }
 
+  it('passes -S codec:h264 -f best args', async () => {
+    const proc = makeMockProc();
+    _dep.spawn = vi.fn(() => proc);
+
+    downloadAsBuffer('abc123');
+    const args = _dep.spawn.mock.calls[0][1];
+
+    expect(args).toContain('-S');
+    expect(args).toContain('codec:h264');
+    expect(args).toContain('-f');
+    expect(args).toContain('best');
+  });
+
   it('buffers stdout and resolves', async () => {
     const proc = makeMockProc();
     _dep.spawn = vi.fn(() => proc);
