@@ -28,12 +28,17 @@ All in-memory — no files written to disk.
 Use the `/reel` slash command:
 
 ```
-/reel https://www.instagram.com/reel/XXXX
+/reel url:https://www.instagram.com/reel/XXXX
+/reel url:https://www.instagram.com/reel/XXXX anon:true
 ```
+
+The optional `anon` flag skips browser cookies — useful for testing public reels without risking account rate limits.
 
 ## Cookie Configuration
 
-The bot reads cookies from your browser to authenticate with Instagram. Set the browser name in `.env` by changing the following line:
+The bot reads cookies from your browser to authenticate with Instagram. For public reels, you can skip cookies entirely using `anon:true`.
+
+Set the browser name in `.env` by changing the following line:
 
 ```
 YT_DLP_BROWSER=firefox   # chrome, edge, brave, firefox
@@ -58,6 +63,6 @@ Tests use [Vitest](https://vitest.dev) and cover the resolver (yt-dlp wrapper) a
 ## How it works
 
 1. Bot receives `/reel` with an Instagram reel URL
-2. `yt-dlp` fetches the video metadata and pipes the MP4 to memory
+2. `yt-dlp` selects the pre-muxed h264+AAC MP4 stream and pipes it to memory
 3. Bot uploads the buffer directly to Discord as an attachment
 4. No files are ever written to disk
