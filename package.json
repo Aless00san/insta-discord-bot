@@ -2,6 +2,7 @@
   "name": "instagram-embed",
   "version": "1.0.0",
   "description": "Instagram Reel Discord embed proxy",
+  "packageManager": "pnpm@10.17.0",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
